@@ -1,0 +1,412 @@
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --dark-blue: #1e2635;
+    --blue: #4f5e77;
+    --orange: #ff8a00;
+    --grey: #f4f4f4;
+  }
+
+  /* body {
+        width: 713px;
+        border: 1px solid;
+      } */
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    margin: 0.5rem 0;
+    text-align: center;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  .custom-parent-container {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* >>>>>>>>>>> CANVAS <<<<<<<<<<<<<<<<<< */
+  .canvas {
+    width: 256px;
+    height: 256px;
+    border-radius: 5px;
+    border: 3px solid var(--orange);
+    box-shadow: 4px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    background-color: var(--grey);
+  }
+
+  .tools-wrapper {
+    width: 256px;
+    display: flex;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-top: 15px;
+  }
+
+  .customize-btn {
+    background-color: var(--grey);
+    color: var(--orange);
+    font-size: 20px;
+    border: 3px solid var(--orange);
+    border-radius: 5px;
+    padding: 5px 11px;
+    font-family: "Hind Siliguri";
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.5s ease-in-out;
+  }
+
+  .customize-btn:hover,
+  .customize-btn:focus {
+    background-color: var(--orange);
+    color: #fff;
+  }
+
+  .cat-btn {
+    margin-left: 5px;
+  }
+
+  .clear-btn {
+    margin-left: auto;
+  }
+
+  /* >>>>>>>>>>>>>>>> SQUARES <<<<<<<<<<<<<*/
+  .layers-section {
+    width: 340px;
+    height: 300px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 20px;
+  }
+
+  .square {
+    margin: 10px 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 2px;
+    border: 3px solid var(--orange);
+    background: transparent;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .lines-wrapper {
+    top: 0;
+    position: relative;
+    width: 100%;
+    height: 300px;
+  }
+
+  svg {
+    position: absolute;
+  }
+
+  .square-filler {
+    width: 100%;
+    background-color: var(--orange);
+    margin: 1px;
+  }
+
+  /* IMAGES */
+
+  .images-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 20px;
+  }
+
+  .custom-image:not(:last-child) {
+    margin-bottom: 10px;
+  }
+</style>
+
+<div class="custom-parent-container">
+  <!-- >>>>>>>>>>>>> CANVAS <<<<<<<<<<<<<<<<<<<<< -->
+  <div class="section">
+    <canvas
+      onmousedown="handleCanvasMouseDown(event)"
+      onmousemove="handleCanvasMouseMove(event)"
+      onmouseup="handleCanvasMouseUp(event)"
+      class="canvas js-canvas"
+      width="256"
+      height="256"
+      id="canvas"
+    ></canvas>
+
+    <div class="tools-wrapper">
+      <button
+        type="button"
+        class="customize-btn js-dog-btn"
+        onclick="handleDogBtnClick()"
+      >
+        Dog
+      </button>
+      <button
+        type="button"
+        class="customize-btn cat-btn js-cat-btn"
+        onclick="handleCatBtnClick()"
+      >
+        Cat
+      </button>
+      <button
+        type="button"
+        class="customize-btn clear-btn js-clear-btn"
+        onclick="handleClearClick()"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+  <!-- >>>>>>>>>>>>>>>> SQUARES <<<<<<<<<<<<<<<<<<<< -->
+  <div class="layers-section js-layers-section"></div>
+  <!-- >>>>>>>>>>>>>>>> IMAGES <<<<<<<<<<<<<<<<<<<<<< -->
+  <div class="images-section">
+    <img
+      class="custom-image"
+      src="https://codefinity-content-media-v2.s3.eu-west-1.amazonaws.com/courses/c1087363-9025-4c37-8d5e-983a32a007e9/other-section/oleh-s_tests/cat.png"
+      alt="Cat Illustration"
+      width="30px"
+      style="width: 30px"
+    />
+    <img
+      class="custom-image"
+      src="https://codefinity-content-media-v2.s3.eu-west-1.amazonaws.com/courses/c1087363-9025-4c37-8d5e-983a32a007e9/other-section/oleh-s_tests/dog.png"
+      alt="Dog Illustration"
+      width="30px"
+      style="width: 30px"
+    />
+  </div>
+</div>
+<!-- CANVAS SCRIPT -->
+<!-- canvas constants -->
+<script>
+  // Canvas properties
+  window.penSize = 2;
+  window.isDrawing = false;
+  window.penColor = "black";
+  window.lastX = undefined;
+  window.lastY = undefined;
+</script>
+<!-- canvas functions -->
+<script>
+  function handleCanvasMouseDown(e) {
+    const canvasContext = document.querySelector(".js-canvas").getContext("2d");
+
+    isDrawing = true;
+    lastX = e.offsetX;
+    lastY = e.offsetY;
+
+    if (e.shiftKey) {
+      // If Shift key is held down, start clearing mode
+      clearPixels(lastX, lastY);
+    } else {
+      canvasContext.beginPath();
+      canvasContext.moveTo(lastX, lastY);
+    }
+  }
+
+  function handleCanvasMouseUp() {
+    isDrawing = false;
+    lastX = undefined;
+    lastY = undefined;
+  }
+
+  function handleCanvasMouseMove(e) {
+    const canvasContext = document.querySelector(".js-canvas").getContext("2d");
+
+    if (isDrawing) {
+      const currentX = e.offsetX;
+      const currentY = e.offsetY;
+
+      if (e.shiftKey) {
+        // If Shift key is held down and in clearing mode, clear the pixels
+        clearPixels(currentX, currentY);
+      } else {
+        canvasContext.lineTo(currentX, currentY);
+        canvasContext.strokeStyle = penColor;
+        canvasContext.lineWidth = penSize * 2;
+        canvasContext.stroke();
+      }
+
+      lastX = currentX;
+      lastY = currentY;
+    }
+  }
+
+  function clearPixels(x, y) {
+    const canvasContext = document.querySelector(".js-canvas").getContext("2d");
+    canvasContext.clearRect(x - penSize, y - penSize, penSize * 2, penSize * 2);
+  }
+
+  function handleClearClick() {
+    const canvas = document.querySelector(".js-canvas");
+    const canvasContext = canvas.getContext("2d");
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function handleDogBtnClick() {
+    console.log("Dog button was clicked");
+  }
+
+  function handleCatBtnClick() {
+    console.log("Cat button was clicked");
+  }
+</script>
+
+<!-- LAYERS SCRIPT -->
+<!-- layers constants -->
+<script>
+  window.data = [
+    [
+      { id: "14", fill: 90 },
+      { id: "15", fill: 10 },
+      { id: "14", fill: 40 },
+      { id: "15", fill: 50 },
+    ],
+    [
+      { id: "14", fill: 90 },
+      { id: "15", fill: 70 },
+      { id: "14", fill: 60 },
+      { id: "15", fill: 50 },
+    ],
+    [
+      { id: "14", fill: 0 },
+      { id: "15", fill: 30 },
+      { id: "14", fill: 10 },
+      { id: "15", fill: 50 },
+    ],
+    [
+      { id: "21", fill: 10 },
+      { id: "22", fill: 20 },
+      { id: "23", fill: 50 },
+      { id: "24", fill: 30 },
+    ],
+    [
+      { id: "21", fill: 10 },
+      { id: "22", fill: 20 },
+      { id: "23", fill: 50 },
+      { id: "24", fill: 30 },
+      { id: "21", fill: 70 },
+      { id: "22", fill: 20 },
+      { id: "23", fill: 100 },
+      { id: "24", fill: 30 },
+    ],
+    [
+      { id: "21", fill: 10 },
+      { id: "24", fill: 30 },
+    ],
+  ];
+  window.points = {
+    1: [150],
+    2: [130, 170],
+    3: [110, 150, 190],
+    4: [90, 130, 170, 210],
+    5: [70, 110, 150, 190, 230],
+    6: [50, 90, 130, 170, 210, 250],
+    7: [30, 70, 110, 150, 190, 230, 270],
+    8: [10, 50, 90, 130, 170, 210, 250, 290],
+  };
+</script>
+<!-- layers functions -->
+<script>
+  function handleLoad() {
+    const layersSectionElement = document.querySelector(".js-layers-section");
+
+    // Generate columns and sets of lines dynamically
+    for (let i = 0; i < data.length; i++) {
+      const column = buildColumnSquares(data[i]);
+      layersSectionElement.appendChild(column);
+
+      if (i < data.length - 1) {
+        const setOfLines = createDots(data[i].length, data[i + 1].length);
+        layersSectionElement.appendChild(setOfLines);
+      }
+    }
+  }
+
+  function buildColumnSquares(squaresArray) {
+    const columnParentElement = document.createElement("div");
+    columnParentElement.setAttribute("class", "layer");
+
+    const columnSquaresMarkup = squaresArray
+      .map(
+        ({ id, fill }) => `
+              <div class="square" id="${id}">
+                <div class="square-filler" style="height: ${
+                  (22 * fill) / 100
+                }px;"></div>
+              </div>
+            `
+      )
+      .join("");
+
+    columnParentElement.innerHTML = columnSquaresMarkup;
+    return columnParentElement;
+  }
+
+  function createDots(...keys) {
+    if (keys.includes(0)) {
+      return;
+    }
+    const linesParentElement = document.createElement("div");
+    linesParentElement.setAttribute("class", "lines-wrapper");
+
+    const combinations = [];
+
+    // Generate all combinations of points from different arrays
+    for (let i = 0; i < keys.length; i++) {
+      const key1 = keys[i];
+      const linePoints1 = points[key1];
+
+      for (let j = i + 1; j < keys.length; j++) {
+        const key2 = keys[j];
+        const linePoints2 = points[key2];
+
+        // Loop through all combinations of points from different arrays
+        for (const point1 of linePoints1) {
+          for (const point2 of linePoints2) {
+            combinations.push({ point1, point2 });
+          }
+        }
+      }
+    }
+
+    // Create SVG elements and append them to the container
+    for (const combination of combinations) {
+      const svgElement = createLine(combination.point1, combination.point2);
+      linesParentElement.innerHTML += svgElement;
+    }
+
+    return linesParentElement; // Return the container
+  }
+
+  function createLine(point1, point2) {
+    return `
+          <svg width="100%" height="100%">
+            <line
+              x1="0"
+              y1="${point1}"
+              x2="100%"
+              y2="${point2}"
+              stroke="#ff8a00"
+              stroke-width="1"
+            />
+          </svg>
+        `;
+  }
+
+  window.onload = handleLoad();
+</script>
